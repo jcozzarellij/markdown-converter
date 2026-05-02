@@ -76,13 +76,13 @@ function App() {
 
   const { content, setContent, clear, isLoading, setIsLoading } = useEditorState();
   const { history, addItem, removeItem, clearHistory } = useHistory();
-  const currentFileName = useRef<string>('');
+  const [currentFileName, setCurrentFileName] = useState('');
   const currentItemId = useRef<string>('');
   const editorRef = useRef<MarkdownEditorHandle>(null);
 
   const handleFileSelect = useCallback(async (file: File) => {
     setIsLoading(true);
-    currentFileName.current = file.name;
+    setCurrentFileName(file.name);
     toast.loading('Converting file...', { id: 'convert' });
 
     try {
@@ -119,14 +119,14 @@ function App() {
       open: true,
       type: 'download',
       title: 'Download file?',
-      message: `Download "${currentFileName.current || 'document'}.md" to your device?`,
+      message: `Download "${currentFileName || 'document'}.md" to your device?`,
       onConfirm: () => {
         const blob = new Blob([content], { type: 'text/markdown' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = currentFileName.current
-          ? currentFileName.current.replace(/\.[^.]+$/, '.md')
+        a.download = currentFileName
+          ? currentFileName.replace(/\.[^.]+$/, '.md')
           : 'document.md';
         document.body.appendChild(a);
         a.click();
@@ -142,11 +142,11 @@ function App() {
       open: true,
       type: 'clear',
       title: 'Delete file?',
-      message: `Delete "${currentFileName.current || 'this file'}" from your history?`,
+      message: `Delete "${currentFileName || 'this file'}" from your history?`,
       onConfirm: () => {
         if (currentItemId.current) removeItem(currentItemId.current);
         clear();
-        currentFileName.current = '';
+        setCurrentFileName('');
         currentItemId.current = '';
         setCurrentFileType(null);
         toast.success('File deleted');
@@ -163,7 +163,7 @@ function App() {
       onConfirm: () => {
         clearHistory();
         clear();
-        currentFileName.current = '';
+        setCurrentFileName('');
         setCurrentFileType(null);
         toast.success('History cleared');
       }
@@ -172,14 +172,14 @@ function App() {
 
   const handleNewFile = useCallback(() => {
     clear();
-    currentFileName.current = '';
+    setCurrentFileName('');
     currentItemId.current = '';
     setCurrentFileType(null);
   }, [clear]);
 
   const handleHistorySelect = useCallback((item: any) => {
     setContent(item.content);
-    currentFileName.current = item.fileName;
+    setCurrentFileName(item.fileName);
     currentItemId.current = item.id;
     setCurrentFileType(item.fileType);
   }, [setContent]);
@@ -277,7 +277,7 @@ function App() {
               <span>{fileTypeLabels[currentFileType]}</span>
             </div>
           )}
-          <span className="text-gray-500 text-sm truncate">{currentFileName.current}</span>
+          <span className="text-gray-500 text-sm truncate">{currentFileName}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
