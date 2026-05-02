@@ -96,9 +96,9 @@ export function HistorySidebar({
         <button
           onClick={onToggle}
           className="p-2 rounded-lg hover:bg-[#1a1a1a] text-gray-500 hover:text-white transition-all duration-150 group"
-          title="Show History"
+          aria-label="Show History"
         >
-          <PanelLeft className="w-4 h-4 group-hover:scale-110 transition-transform" />
+          <PanelLeft className="w-4 h-4 group-hover:scale-110 transition-transform" aria-hidden="true" />
         </button>
 
         {history.length > 0 && (
@@ -117,9 +117,9 @@ export function HistorySidebar({
                       ? "bg-white/10 text-white"
                       : "hover:bg-[#1a1a1a] text-gray-500 hover:text-white"
                   }`}
-                  title={item.fileName}
+                  aria-label={`Open ${item.fileName}`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4" aria-hidden="true" />
                 </button>
               );
             })}
@@ -177,9 +177,9 @@ export function HistorySidebar({
           <button
             onClick={onToggle}
             className="p-1.5 rounded hover:bg-[#1a1a1a] text-gray-500 hover:text-white transition-all duration-150 group"
-            title="Collapse"
+            aria-label="Collapse sidebar"
           >
-            <PanelLeftClose className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+            <PanelLeftClose className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -217,10 +217,12 @@ export function HistorySidebar({
                         : "hover:bg-[#141414]"
                   }`}
                   style={{ animationDelay: `${index * 20}ms` }}
+                  aria-label={`Open ${item.fileName}`}
                 >
                   <div className="flex items-start gap-3">
                     <div
                       className={`flex-shrink-0 w-8 h-8 rounded-lg ${config.bg} flex items-center justify-center transition-transform group-hover:scale-105 ${isSelected ? "ring-1 ring-white/20" : ""}`}
+                      aria-hidden="true"
                     >
                       <Icon className={`w-4 h-4 ${config.color}`} />
                     </div>

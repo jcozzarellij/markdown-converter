@@ -119,6 +119,7 @@ export function DropZone({ onFileSelect, selectedCategory, onCategoryChange }: D
                   : 'border-[#262626] bg-[#0c0c0c] hover:border-gray-600 hover:bg-[#141414]'
                 }
               `}
+              aria-label={`Upload ${cat.label} file - ${cat.desc}`}
             >
               <div className={`
                 p-4 rounded-xl transition-all duration-200
@@ -126,7 +127,8 @@ export function DropZone({ onFileSelect, selectedCategory, onCategoryChange }: D
                   ? 'bg-white text-black' 
                   : 'bg-[#1a1a1a] text-gray-400 group-hover:text-white group-hover:bg-[#262626]'
                 }
-              `}>
+              `}
+              aria-hidden="true">
                 {cat.icon}
               </div>
               

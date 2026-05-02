@@ -33,10 +33,36 @@ const fileTypeLabels: Record<FileType, string> = {
   excel: 'Excel',
 };
 
+const viewModeOptions: { mode: ViewMode; icon: React.ReactNode; title: string }[] = [
+  { mode: 'editor', icon: <Code2 className="w-3.5 h-3.5" />, title: 'Editor only' },
+  { mode: 'split', icon: <Columns2 className="w-3.5 h-3.5" />, title: 'Split view' },
+  { mode: 'preview', icon: <Eye className="w-3.5 h-3.5" />, title: 'Preview only' },
+];
+
+function ViewModeToggle({ viewMode, onChange }: { viewMode: ViewMode; onChange: (mode: ViewMode) => void }) {
+  return (
+    <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-[#141414] border border-[#262626]">
+      {viewModeOptions.map(({ mode, icon, title }) => (
+        <button
+          key={mode}
+          onClick={() => onChange(mode)}
+          title={title}
+          className={`p-1 rounded transition-all duration-150 ${
+            viewMode === mode
+              ? 'bg-white text-black'
+              : 'text-gray-500 hover:text-white hover:bg-[#262626]'
+          }`}
+        >
+          {icon}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function App() {
   const [category, setCategory] = useState<Category>('pdf');
   const [currentFileType, setCurrentFileType] = useState<FileType | null>(null);
-  const [hasFile, setHasFile] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('split');
@@ -60,27 +86,20 @@ function App() {
     toast.loading('Converting file...', { id: 'convert' });
 
     try {
-      let result: string;
-      let fileType: FileType;
+      const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+      const isPdf = ext === 'pdf';
+      const isDocx = ext === 'docx' || ext === 'doc';
 
-      const ext = file.name.split('.').pop()?.toLowerCase();
+      const result = isPdf ? await pdfToMd(file)
+        : isDocx ? await docxToMd(file)
+        : await excelToMd(file);
 
-      if (ext === 'pdf') {
-        result = await pdfToMd(file);
-        fileType = 'pdf';
-      } else if (ext === 'docx' || ext === 'doc') {
-        result = await docxToMd(file);
-        fileType = 'docx';
-      } else {
-        result = await excelToMd(file);
-        fileType = 'excel';
-      }
+      const fileType: FileType = isPdf ? 'pdf' : isDocx ? 'docx' : 'excel';
 
       setContent(result);
       const newItem = addItem(file.name, fileType, result);
       currentItemId.current = newItem.id;
       setCurrentFileType(fileType);
-      setHasFile(true);
       toast.success('File converted successfully!', { id: 'convert' });
     } catch (error) {
       toast.error('Failed to convert file. Please try again.', { id: 'convert' });
@@ -130,7 +149,6 @@ function App() {
         currentFileName.current = '';
         currentItemId.current = '';
         setCurrentFileType(null);
-        setHasFile(false);
         toast.success('File deleted');
       }
     });
@@ -147,7 +165,6 @@ function App() {
         clear();
         currentFileName.current = '';
         setCurrentFileType(null);
-        setHasFile(false);
         toast.success('History cleared');
       }
     });
@@ -158,7 +175,6 @@ function App() {
     currentFileName.current = '';
     currentItemId.current = '';
     setCurrentFileType(null);
-    setHasFile(false);
   }, [clear]);
 
   const handleHistorySelect = useCallback((item: any) => {
@@ -166,7 +182,6 @@ function App() {
     currentFileName.current = item.fileName;
     currentItemId.current = item.id;
     setCurrentFileType(item.fileType);
-    setHasFile(true);
   }, [setContent]);
 
   const handleToggleSidebar = useCallback(() => {
@@ -210,19 +225,26 @@ function App() {
     }
   }, [content, setContent]);
 
-  // Global keyboard shortcuts
+  const showEditor = !!content && history.length > 0;
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       const inTextInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
-
       if (e.ctrlKey && !e.shiftKey && e.key === 'u' && !inTextInput) {
         e.preventDefault();
         setShowUploadModal(true);
-        return;
       }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
-      if (!showEditor) return;
+  useEffect(() => {
+    if (!showEditor) return;
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const inTextInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
 
       if (e.ctrlKey && !e.shiftKey && e.key === 's') {
         e.preventDefault();
@@ -237,39 +259,12 @@ function App() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [handleDownload, handleCopy]);
+  }, [showEditor, handleDownload, handleCopy]);
 
-  const showEditor = hasFile && history.length > 0;
+  const previewContent = content;
 
-  const [previewContent, setPreviewContent] = useState(content);
-  useEffect(() => {
-    const t = setTimeout(() => setPreviewContent(content), 150);
-    return () => clearTimeout(t);
-  }, [content]);
-
-  // ── View mode toggle buttons (shared between editor/preview headers) ──────
-  const viewModeToggle = (
-    <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-[#141414] border border-[#262626]">
-      {([
-        { mode: 'editor', icon: <Code2 className="w-3.5 h-3.5" />, title: 'Editor only' },
-        { mode: 'split', icon: <Columns2 className="w-3.5 h-3.5" />, title: 'Split view' },
-        { mode: 'preview', icon: <Eye className="w-3.5 h-3.5" />, title: 'Preview only' },
-      ] as { mode: ViewMode; icon: React.ReactNode; title: string }[]).map(({ mode, icon, title }) => (
-        <button
-          key={mode}
-          onClick={() => setViewMode(mode)}
-          title={title}
-          className={`p-1 rounded transition-all duration-150 ${
-            viewMode === mode
-              ? 'bg-white text-black'
-              : 'text-gray-500 hover:text-white hover:bg-[#262626]'
-          }`}
-        >
-          {icon}
-        </button>
-      ))}
-    </div>
-  );
+  const showViewModeToggle = viewMode === 'editor' || viewMode === 'preview';
+  const viewModeToggleElement = showViewModeToggle ? <ViewModeToggle viewMode={viewMode} onChange={setViewMode} /> : null;
 
   // ── Panel JSX ─────────────────────────────────────────────────────────────
   const editorPanel = (
@@ -292,7 +287,7 @@ function App() {
           >
             <ClipboardPaste className="w-3.5 h-3.5" />
           </button>
-          {viewMode === 'editor' && viewModeToggle}
+          {viewModeToggleElement}
         </div>
       </div>
       <div className="flex-1 overflow-hidden">
@@ -311,7 +306,7 @@ function App() {
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-[#262626] bg-[#0c0c0c] flex-shrink-0">
         <span className="text-xs text-gray-600 font-medium uppercase tracking-wider">Preview</span>
         <div className="flex items-center gap-2">
-          {hasFile && (
+          {!!content && (
             <ActionBar
               onCopy={handleCopy}
               onDownload={handleDownload}
@@ -320,7 +315,7 @@ function App() {
               isProcessing={isLoading}
             />
           )}
-          {viewModeToggle}
+          {viewModeToggleElement}
         </div>
       </div>
       <div className="flex-1 overflow-hidden relative">

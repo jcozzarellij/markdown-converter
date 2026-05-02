@@ -24,19 +24,26 @@ export function ConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-modal-title"
+    >
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
+        aria-hidden="true"
       />
       <div className="relative bg-[#1a1a1a] border border-[#333] rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-[#262626]">
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
+          <h2 id="confirm-modal-title" className="text-lg font-semibold text-white">{title}</h2>
           <button
             onClick={onClose}
+            aria-label="Close dialog"
             className="p-1 rounded text-gray-500 hover:text-white hover:bg-[#262626] transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
         <div className="p-4">
