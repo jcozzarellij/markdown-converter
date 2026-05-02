@@ -13,6 +13,7 @@ import { DropZone } from './components/Upload/DropZone';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 import { UploadModal } from './components/Upload/UploadModal';
 import { ResizablePanel } from './components/Layout/ResizablePanel';
+import { Footer } from './components/Layout/Footer';
 import { pdfToMd, docxToMd, excelToMd } from './lib/converters';
 import { htmlToMarkdown } from './lib/htmlToMarkdown';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -398,6 +399,8 @@ function App() {
         cancelText="Cancel"
         type={confirmModal.type === 'download' ? 'info' : 'danger'}
       />
+
+      <Footer />
     </div>
     </TooltipProvider>
   );
